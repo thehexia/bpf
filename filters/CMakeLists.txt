@@ -1,3 +1,3 @@
-add_executable(ports ports.cpp handlers.cpp)
+include_directories(.)
 
-target_link_libraries(ports pcap)
+add_subdirectory(ports)
