@@ -142,6 +142,9 @@ public:
   // Handle
   pcap_t* handle() const { return handle_; }
 
+  // Error buffer.
+  char const* error() const { return error_; }
+
 private:
   char    error_[PCAP_ERRBUF_SIZE]; // An error message (256 bytes)
   pcap_t* handle_;                  // The underlying device
@@ -199,6 +202,16 @@ Stream::get(Packet& p)
     status_ = ::pcap_next_ex(handle_, &p.hdr, &p.buf);
   } while (status_ == 0);
   return *this;
+}
+
+
+inline unsigned int
+linktype_len(Link_type t)
+{
+  switch (t) {
+    case Link_type::ethernet_link: return 14;
+    default: return 14;
+  }
 }
 
 
