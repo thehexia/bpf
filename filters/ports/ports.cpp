@@ -33,7 +33,7 @@ main(int argc, char* argv[])
 
   // Check for number of copies/iterations. Default 1.
   int iterations = 1;
-  if (argc > 2)
+  if (argc > 3)
     iterations = std::stoi(argv[3]);
   std::cout << "Iterations: " << iterations << '\n';
 
@@ -46,19 +46,26 @@ main(int argc, char* argv[])
   }
 
   // Set up the filter.
-  unsigned int dl_len = cap::linktype_len(cap.link_type());
   bpf_program prog;
   std::string filter = bpf.read();
+  unsigned int dl_len = ff::cap::linktype_len(cap.link_type());
   compile_bpf(cap, prog, filter.c_str(), PCAP_NETMASK_UNKNOWN);
-  set_filter(cap, prog, filter.c_str());
-  std::cout << "Set filter: " << filter << '\n';
 
-  // Start looping and filtering packets.
   std::cout << "Starting filter\n";
   {
     Timer t;
-    pcap_loop(cap, allowed_port_logger, iterations, (u_char*) &dl_len);
+    user_filter_loop(cap, prog, allowed_port_logger, iterations, (u_char*) &dl_len);
   }
+
+  // set_filter(cap, prog, filter.c_str());
+  // std::cout << "Set filter: " << filter << '\n';
+  //
+  // // Start looping and filtering packets.
+  // std::cout << "Starting filter\n";
+  // {
+  //   Timer t;
+  //   filter_loop(cap, allowed_port_logger, iterations, (u_char*) &dl_len);
+  // }
 
   // while (cap.get(p)) {
   //   for (int i = 0; i < iterations; i++) {
