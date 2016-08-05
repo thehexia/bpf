@@ -59,7 +59,9 @@ filter_loop(ff::cap::Stream& stream, pcap_handler callback, int iterations, u_ch
 
 // Manual BPF filtering in userspace using raw filtering interface.
 inline void
-user_filter_loop(ff::cap::Stream& stream, bpf_program prog, pcap_handler callback, int iterations, u_char* user_data = nullptr)
+user_filter_loop(ff::cap::Stream& stream, bpf_program prog,
+                 pcap_handler allow_callback, pcap_handler block_callback,
+                 int iterations, u_char* user_data = nullptr)
 {
   ff::cap::Packet p;
   while (stream.get(p)) {
@@ -67,9 +69,10 @@ user_filter_loop(ff::cap::Stream& stream, bpf_program prog, pcap_handler callbac
     assert(prog.bf_insns);
 
     for (int i = 0; i < iterations; ++i) {
-      if (bpf_filter(prog.bf_insns, p.data(), p.total_size(), p.captured_size())) {
-        callback(user_data, p.hdr, p.data());
-      }
+      if (bpf_filter(prog.bf_insns, p.data(), p.total_size(), p.captured_size()))
+        allow_callback(user_data, p.hdr, p.data());
+      else if (block_callback)
+        block_callback(user_data, p.hdr, p.data());
     }
   }
 }

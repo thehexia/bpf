@@ -23,18 +23,23 @@ main(int argc, char* argv[])
 {
   // Read the file containing filter instructions.
   if (argc < 2)
-    throw std::runtime_error("No pcap or filter file given.");
+    throw std::runtime_error("Usage: driver <bpf-program> <pcap-file> <output-file> [ <iterations> ]");
   bpf_test::File bpf(argv[1]);
 
   // Load the given pcap file.
   if (argc < 3)
-    throw std::runtime_error("No pcap or filter file given.");
+    throw std::runtime_error("Usage: driver <bpf-program> <pcap-file> <output-file> [ <iterations> ]");
   char* pcap_file = argv[2];
+
+  // Get the dump output file.
+  if (argc < 4)
+    throw std::runtime_error("Usage: driver <bpf-program> <pcap-file> <output-file> [ <iterations> ]");
+  char* dump_file = argv[3];
 
   // Check for number of copies/iterations. Default 1.
   int iterations = 1;
-  if (argc > 3)
-    iterations = std::stoi(argv[3]);
+  if (argc > 4)
+    iterations = std::stoi(argv[4]);
   std::cout << "Iterations: " << iterations << '\n';
 
   std::cout << "Loading: " << pcap_file << '\n';
@@ -51,27 +56,12 @@ main(int argc, char* argv[])
   unsigned int dl_len = ff::cap::linktype_len(cap.link_type());
   compile_bpf(cap, prog, filter.c_str(), PCAP_NETMASK_UNKNOWN);
 
+
+  cap::Dump_stream dump(dump_file);
   std::cout << "Starting filter\n";
   {
     Timer t;
-    user_filter_loop(cap, prog, allowed_port_logger, iterations, (u_char*) &dl_len);
+    user_filter_loop(cap, prog, pcap_dump, nullptr,
+                     iterations, (u_char*) dump.dumper());
   }
-
-  // set_filter(cap, prog, filter.c_str());
-  // std::cout << "Set filter: " << filter << '\n';
-  //
-  // // Start looping and filtering packets.
-  // std::cout << "Starting filter\n";
-  // {
-  //   Timer t;
-  //   filter_loop(cap, allowed_port_logger, iterations, (u_char*) &dl_len);
-  // }
-
-  // while (cap.get(p)) {
-  //   for (int i = 0; i < iterations; i++) {
-  //     std::uint8_t* buf = new std::uint8_t[p.captured_size()];
-  //     std::unique_ptr<uint8_t> ptr(buf);
-  //     std::memcpy(&buf[0], p.data(), p.captured_size());
-  //   }
-  // }
 }

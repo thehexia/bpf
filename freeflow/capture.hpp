@@ -133,6 +133,7 @@ public:
 
   // Streaming
   Stream& get(Packet&);
+  void    dump(Packet&, char const*);
 
   // Contextual conversion to bool.
   explicit operator bool() const { return ok(); }
@@ -188,8 +189,6 @@ Stream::link_type() const
   return (Link_type)pcap_datalink(handle_);
 }
 
-
-
 // Attempt to get the next packet from the stream. Returnsthis object.
 // If, after calling this function, the stream is not in a good state,
 // the packet `p` is partially formed.
@@ -213,6 +212,41 @@ linktype_len(Link_type t)
     default: return 14;
   }
 }
+
+
+
+class Dump_stream
+{
+public:
+  Dump_stream(char const*);
+
+  // Dump a packet into a pcap file.
+  void dump(Packet& p);
+
+  pcap_t* handle() const { return handle_; }
+  pcap_dumper_t* dumper() const { return dump_; }
+
+private:
+  pcap_t* handle_;
+  pcap_dumper_t* dump_;
+};
+
+
+// Open the offline capture indicated by the path `p`. Throws
+// an exception if the capture cannot be opened.
+inline
+Dump_stream::Dump_stream(char const* file)
+  : handle_(::pcap_open_dead(DLT_EN10MB, 65535)),
+    dump_(::pcap_dump_open(handle_, file))
+{ }
+
+
+inline void
+Dump_stream::dump(Packet& p)
+{
+  ::pcap_dump((u_char*) dump_, p.hdr, p.buf);
+}
+
 
 
 } // namespace cap

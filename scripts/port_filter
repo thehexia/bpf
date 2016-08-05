@@ -1,0 +1,1 @@
+../build/filters/ports/ports ../bpf/l4ports.bpf ../input/$1.pcap $2.pcap $3
