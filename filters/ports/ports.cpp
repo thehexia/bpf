@@ -59,9 +59,9 @@ main(int argc, char* argv[])
 
   cap::Dump_stream dump(dump_file);
   std::cout << "Starting filter\n";
-  {
-    Timer t;
-    user_filter_loop(cap, prog, pcap_dump, nullptr,
-                     iterations, (u_char*) dump.dumper());
-  }
+
+  Timer t;
+  int pktno = user_filter_loop(cap, prog, pcap_dump, nullptr,
+                               iterations, (u_char*) dump.dumper());
+  std::cout << "Pps: " << pktno / t.elapsed() << '\n';
 }
